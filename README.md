@@ -1,11 +1,16 @@
 
-    🚀 Ce que fait se bot discord :
+🚀 Ce que fait se bot discord :
 
 ✅ Télécharge les images ET les vidéos (MP4, GIF, etc.)
+
 ✅ Classe les fichiers par catégorie de salon
+
 ✅ Crée un dossier media/Catégorie/Salon/images/ pour les images
+
 ✅ Crée un dossier media/Catégorie/Salon/videos/ pour les vidéos
+
 ✅ Gère les noms de fichiers et de dossiers interdits
+
 ✅ Se déconnecte après l'exécution
 
 
@@ -21,7 +26,7 @@
     initialisez un projet npm et installez les dépendances discord.js et node-fetch :
 
     npm init -y
-    
+
     npm install discord.js node-fetch
 
 
