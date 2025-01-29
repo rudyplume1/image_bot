@@ -30,12 +30,30 @@ client.once('ready', async () => {
         const guild = await client.guilds.fetch(guildId);
         const channels = await guild.channels.fetch();
 
+        // Trie les salons par catégorie
+        const categorizedChannels = {};
         for (const [, channel] of channels) {
             if (channel.type === ChannelType.GuildText) {
-                console.log(`📂 Traitement du salon : ${channel.name}`);
+                const category = channel.parent ? channel.parent.name : "Sans_Categorie";
+                if (!categorizedChannels[category]) {
+                    categorizedChannels[category] = [];
+                }
+                categorizedChannels[category].push(channel);
+            }
+        }
 
-                // Création du dossier du salon (remplacement des caractères spéciaux)
-                const channelDir = path.join(__dirname, 'images', channel.name.replace(/[^a-zA-Z0-9_-]/g, '_'));
+        // Traitement des salons
+        for (const [categoryName, textChannels] of Object.entries(categorizedChannels)) {
+            const categoryDir = path.join(__dirname, 'images', sanitize(categoryName));
+            if (!fs.existsSync(categoryDir)) {
+                fs.mkdirSync(categoryDir, { recursive: true });
+            }
+
+            for (const channel of textChannels) {
+                console.log(`📂 Traitement du salon : ${channel.name} (Catégorie: ${categoryName})`);
+
+                // Création du dossier du salon dans la catégorie
+                const channelDir = path.join(categoryDir, sanitize(channel.name));
                 if (!fs.existsSync(channelDir)) {
                     fs.mkdirSync(channelDir, { recursive: true });
                 }
@@ -53,6 +71,7 @@ client.once('ready', async () => {
     }
 });
 
+// Fonction pour récupérer les messages et les fichiers d'un salon
 async function fetchMessagesAndDownloadFiles(channel, channelDir) {
     let lastMessageId;
     let messages;
@@ -66,6 +85,7 @@ async function fetchMessagesAndDownloadFiles(channel, channelDir) {
     } while (messages.size > 0);
 }
 
+// Fonction pour télécharger les images des messages
 async function downloadFilesFromMessage(message, channelDir) {
     message.attachments.forEach(async (attachment) => {
         if (attachment.contentType && attachment.contentType.startsWith('image/')) {
@@ -82,4 +102,10 @@ async function downloadFilesFromMessage(message, channelDir) {
     });
 }
 
+// Fonction pour nettoyer les noms de dossier
+function sanitize(name) {
+    return name.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+// Connexion du bot
 client.login(token);
