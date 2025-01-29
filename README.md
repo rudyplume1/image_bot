@@ -1,3 +1,14 @@
+
+    🚀 Ce que fait se bot discord :
+
+✅ Télécharge les images ET les vidéos (MP4, GIF, etc.)
+✅ Classe les fichiers par catégorie de salon
+✅ Crée un dossier media/Catégorie/Salon/images/ pour les images
+✅ Crée un dossier media/Catégorie/Salon/videos/ pour les vidéos
+✅ Gère les noms de fichiers et de dossiers interdits
+✅ Se déconnecte après l'exécution
+
+
 Étape 1 : Configurer un bot Discord
     Allez sur le portail des développeurs Discord : Discord Developer Portal.
     Créez une nouvelle application et donnez-lui un nom.

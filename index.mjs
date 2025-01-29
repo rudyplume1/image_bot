@@ -44,7 +44,7 @@ client.once('ready', async () => {
 
         // Traitement des salons
         for (const [categoryName, textChannels] of Object.entries(categorizedChannels)) {
-            const categoryDir = path.join(__dirname, 'images', sanitize(categoryName));
+            const categoryDir = path.join(__dirname, 'media', sanitize(categoryName));
             if (!fs.existsSync(categoryDir)) {
                 fs.mkdirSync(categoryDir, { recursive: true });
             }
@@ -58,7 +58,7 @@ client.once('ready', async () => {
                     fs.mkdirSync(channelDir, { recursive: true });
                 }
 
-                // Récupérer et télécharger les images du salon
+                // Récupérer et télécharger les fichiers du salon
                 await fetchMessagesAndDownloadFiles(channel, channelDir);
             }
         }
@@ -85,18 +85,27 @@ async function fetchMessagesAndDownloadFiles(channel, channelDir) {
     } while (messages.size > 0);
 }
 
-// Fonction pour télécharger les images des messages
+// Fonction pour télécharger les images et vidéos des messages
 async function downloadFilesFromMessage(message, channelDir) {
     message.attachments.forEach(async (attachment) => {
-        if (attachment.contentType && attachment.contentType.startsWith('image/')) {
+        if (attachment.contentType && (attachment.contentType.startsWith('image/') || attachment.contentType.startsWith('video/'))) {
             try {
                 const response = await fetch(attachment.url);
                 const arrayBuffer = await response.arrayBuffer();
                 const buffer = Buffer.from(arrayBuffer);
-                const fileName = path.join(channelDir, `${Date.now()}-${attachment.name}`);
-                fs.writeFile(fileName, buffer, () => console.log(`📥 Image enregistrée : ${fileName}`));
+
+                // Déterminer le sous-dossier en fonction du type de fichier
+                const fileType = attachment.contentType.startsWith('image/') ? 'images' : 'videos';
+                const fileDir = path.join(channelDir, fileType);
+                if (!fs.existsSync(fileDir)) {
+                    fs.mkdirSync(fileDir, { recursive: true });
+                }
+
+                // Enregistrer le fichier
+                const fileName = path.join(fileDir, `${Date.now()}-${attachment.name}`);
+                fs.writeFile(fileName, buffer, () => console.log(`📥 Fichier téléchargé : ${fileName}`));
             } catch (error) {
-                console.error(`❌ Erreur de téléchargement de l'image : ${error}`);
+                console.error(`❌ Erreur de téléchargement du fichier : ${error}`);
             }
         }
     });
