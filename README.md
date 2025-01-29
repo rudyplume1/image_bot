@@ -20,8 +20,9 @@
     Assurez-vous d'avoir Node.js installé. Ensuite, dans votre terminal, 
     initialisez un projet npm et installez les dépendances discord.js et node-fetch :
 
-npm init -y
-npm install discord.js node-fetch
+    npm init -y
+    
+    npm install discord.js node-fetch
 
 
 Étape 3 : Créer le dossier pour les images
