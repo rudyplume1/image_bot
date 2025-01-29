@@ -10,60 +10,73 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Crée un client Discord
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// Crée un client Discord avec les intents nécessaires
+const client = new Client({ 
+    intents: [
+        GatewayIntentBits.Guilds, 
+        GatewayIntentBits.GuildMessages, 
+        GatewayIntentBits.MessageContent
+    ]
+});
 
-const token = 'TOKEN'; // le token de votre bot
-const channelId = 'ID'; // l'ID de votre canal
+const token = 'Token'; // Remplace par le token de ton bot
+const guildId = 'ID'; // Remplace par l'ID de ton serveur
 
 client.once('ready', async () => {
-    console.log(`connecté en tant que ${client.user.tag}!`);
+    console.log(`✅ Connecté en tant que ${client.user.tag}`);
 
-    // Récupération du canal
-    const channel = await client.channels.fetch(channelId);
+    try {
+        // Récupération de la guilde (serveur)
+        const guild = await client.guilds.fetch(guildId);
+        const channels = await guild.channels.fetch();
 
-    if (channel.type === ChannelType.GuildText) {
-        console.log(`Récupération des messages du canal : ${channel.name}`);
-        await fetchMessagesAndDownloadFiles(channel);
-    } else {
-        console.error(`La chaîne avec ID ${channelId} n'est pas une chaîne de texte.`);
+        for (const [, channel] of channels) {
+            if (channel.type === ChannelType.GuildText) {
+                console.log(`📂 Traitement du salon : ${channel.name}`);
+
+                // Création du dossier du salon (remplacement des caractères spéciaux)
+                const channelDir = path.join(__dirname, 'images', channel.name.replace(/[^a-zA-Z0-9_-]/g, '_'));
+                if (!fs.existsSync(channelDir)) {
+                    fs.mkdirSync(channelDir, { recursive: true });
+                }
+
+                // Récupérer et télécharger les images du salon
+                await fetchMessagesAndDownloadFiles(channel, channelDir);
+            }
+        }
+
+        console.log("✅ Tous les fichiers ont été récupérés !");
+    } catch (error) {
+        console.error("❌ Erreur :", error);
+    } finally {
+        client.destroy(); // Déconnecte le bot après exécution
     }
 });
 
-client.on('messageCreate', async (message) => {
-    if (message.channel.id === channelId && message.attachments.size > 0) {
-        downloadFilesFromMessage(message);
-    }
-});
-
-async function fetchMessagesAndDownloadFiles(channel) {
-    let messages;
+async function fetchMessagesAndDownloadFiles(channel, channelDir) {
     let lastMessageId;
-    
+    let messages;
+
     do {
         messages = await channel.messages.fetch({ limit: 100, before: lastMessageId });
         messages.forEach(message => {
-            downloadFilesFromMessage(message);
+            downloadFilesFromMessage(message, channelDir);
         });
         lastMessageId = messages.last()?.id;
     } while (messages.size > 0);
 }
 
-async function downloadFilesFromMessage(message) {
+async function downloadFilesFromMessage(message, channelDir) {
     message.attachments.forEach(async (attachment) => {
-        if (attachment.contentType && (attachment.contentType.startsWith('image/') || attachment.contentType.startsWith('video/'))) {
+        if (attachment.contentType && attachment.contentType.startsWith('image/')) {
             try {
                 const response = await fetch(attachment.url);
                 const arrayBuffer = await response.arrayBuffer();
                 const buffer = Buffer.from(arrayBuffer);
-                const filesDir = path.join(__dirname, 'images');
-                if (!fs.existsSync(filesDir)) {
-                    fs.mkdirSync(filesDir);
-                }
-                const fileName = path.join(filesDir, `${Date.now()}-${attachment.name}`);
-                fs.writeFile(fileName, buffer, () => console.log(`enregistrée : ${fileName}`));
+                const fileName = path.join(channelDir, `${Date.now()}-${attachment.name}`);
+                fs.writeFile(fileName, buffer, () => console.log(`📥 Image enregistrée : ${fileName}`));
             } catch (error) {
-                console.error(`Erreur de téléchargement de l'image : ${error}`);
+                console.error(`❌ Erreur de téléchargement de l'image : ${error}`);
             }
         }
     });
